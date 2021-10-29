@@ -3,6 +3,7 @@ from flask import render_template #método para renderizar templates HTML
 from flask import request
 from app import app, db
 from app.models.tables import *
+import datetime as dt
 
 @app.route("/")
 def index():
@@ -24,12 +25,12 @@ def cadastrarUsuario(nome, dt_nascimento, sexo, cpf, rg):
     tipo = request.args.get('tipo')
     status = request.args.get('status')
     
-    person = Pessoa(nome, dt_nascimento, sexo, cpf, rg)
+    person = Person(nome, dt_nascimento, sexo, cpf, rg)
 
     db.session.add(person)
     db.session.commit()
 
-    usuario = Usuario(person.id_pessoa, email, senha, tipo, status)
+    usuario = User(person.id_pessoa, email, senha, tipo, status)
 
     db.session.add(usuario)
     db.session.commit()
@@ -61,7 +62,7 @@ def confirmar_aluguel():
     desc = request.args.get('desc')
 
 
-    locacao = Locacao(fk_forma_pagamento, fk_veiculo, fk_usuario, fk_vaga, hora_entrada, hora_saida, valor_hora, descricao)
+    locacao = Rent(fk_forma_pagamento, fk_veiculo, fk_usuario, fk_vaga, hora_entrada, hora_saida, valor_hora, descricao)
 
     db.session.add(locacao)
     db.session.commit()
@@ -86,43 +87,6 @@ def avaliacao():
     return db.Estabelecimento.filter(by='id_estabelecimento')
 
 
-@app.route("/estacionamento", methods=['POST', 'GET'])
-def estacionamentos():
-    id_estabelecimento = request.args.get('id_estabelecimento')
-    return db.Estabelecimento.filter(by='id_estabelecimento')
-
-
-@app.route("/confirmar-aluguel", methods=['POST', 'GET'])
-def confirmar_aluguel():
-    id_estabelecimento = request.args.get('id_estabelecimento')
-    fk_veiculo = request.args.get('fk_veiculo')
-    fk_vaga = request.args.get('fk_vaga')
-    fk_usuario = request.args.get('fk_usuario')
-    fk_forma_pagamento = request.args.get('id_forma_pagamento')
-    hora_entrada = request.args.get('hora_entrada')
-    hora_saida = request.args.get('hora_saida')
-    valor_hora = request.args.get('valor_hora')
-    desc = request.args.get('desc')
-
-
-    locacao = Locacao(fk_forma_pagamento, fk_veiculo, fk_usuario, fk_vaga, hora_entrada, hora_saida, valor_hora, descricao)
-
-    db.session.add(locacao)
-    db.session.commit()
-
-    return db.Estabelecimento.filter(by='id_estabelecimento')
-
-
-@app.route("/estacionamento", methods=['POST', 'GET'])
-def estacionamentos():
-    id_estabelecimento = request.args.get('id_estabelecimento')
-    return db.Estabelecimento.filter(by='id_estabelecimento')
-
-
-@app.route("/estacionamento", methods=['POST', 'GET'])
-def estacionamentos():
-    id_estabelecimento = request.args.get('id_estabelecimento')
-    return db.Estabelecimento.filter(by='id_estabelecimento')
 
 class User(db.Model):
     """Data model for user accounts."""
@@ -139,32 +103,6 @@ class User(db.Model):
         return "<User {}>".format(self.username)
 
 
-@app.route("/confirmar-aluguel", methods=['POST', 'GET'])
-def confirmar_aluguel():
-    id_estabelecimento = request.args.get('id_estabelecimento')
-    fk_veiculo = request.args.get('fk_veiculo')
-    fk_vaga = request.args.get('fk_vaga')
-    fk_usuario = request.args.get('fk_usuario')
-    fk_forma_pagamento = request.args.get('id_forma_pagamento')
-    hora_entrada = request.args.get('hora_entrada')
-    hora_saida = request.args.get('hora_saida')
-    valor_hora = request.args.get('valor_hora')
-    desc = request.args.get('desc')
-
-
-    locacao = Locacao(fk_forma_pagamento, fk_veiculo, fk_usuario, fk_vaga, hora_entrada, hora_saida, valor_hora, descricao)
-
-    db.session.add(locacao)
-    db.session.commit()
-
-    return db.Estabelecimento.filter(by='id_estabelecimento')
-
-
-@app.route("/estacionamento", methods=['POST', 'GET'])
-def estacionamentos():
-    id_estabelecimento = request.args.get('id_estabelecimento')
-    return db.Estabelecimento.filter(by='id_estabelecimento')
-
 
 @app.route("/", methods=["GET"])
 def user_records():
@@ -176,7 +114,7 @@ def user_records():
             User.username == username or User.email == email
         ).first()
         if existing_user:
-            return make_response(f"{username} ({email}) already created!")
+            return "already created!"
         new_user = User(
             username=username,
             email=email,
@@ -187,34 +125,6 @@ def user_records():
         )  # Create an instance of the User class
         db.session.add(new_user)  # Adds new User record to database
         db.session.commit()  # Commits all changes
-        redirect(url_for("user_records"))
     return render_template("users.jinja2", users=User.query.all(), title="Show Users")
-
-@app.route("/confirmar-aluguel", methods=['POST', 'GET'])
-def confirmar_aluguel():
-    id_estabelecimento = request.args.get('id_estabelecimento')
-    fk_veiculo = request.args.get('fk_veiculo')
-    fk_vaga = request.args.get('fk_vaga')
-    fk_usuario = request.args.get('fk_usuario')
-    fk_forma_pagamento = request.args.get('id_forma_pagamento')
-    hora_entrada = request.args.get('hora_entrada')
-    hora_saida = request.args.get('hora_saida')
-    valor_hora = request.args.get('valor_hora')
-    desc = request.args.get('desc')
-
-
-    locacao = Locacao(fk_forma_pagamento, fk_veiculo, fk_usuario, fk_vaga, hora_entrada, hora_saida, valor_hora, descricao)
-
-    db.session.add(locacao)
-    db.session.commit()
-
-    return db.Estabelecimento.filter(by='id_estabelecimento')
-
-
-@app.route("/estacionamento", methods=['POST', 'GET'])
-def estacionamentos():
-    id_estabelecimento = request.args.get('id_estabelecimento')
-    return db.Estabelecimento.filter(by='id_estabelecimento')
-
 
 

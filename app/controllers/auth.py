@@ -6,7 +6,7 @@ from flask import request
 from app import app, db
 from app.models.tables import Pessoa, Usuario
 from werkzeug.security import generate_password_hash, check_password_hash
-import re
+from re import *
 
 auth = Blueprint("auth", __name__)
 
@@ -31,13 +31,7 @@ def login():
     return flash('Método de solicitação incompatível', category='error')
 
 
-def check(email):
-    if(re.fullmatch(regex, email)):
-        print("Valid Email")
- 
-    else:
-        print("Invalid Email")
-
+"""
 @auth.route("/sign-up", methods=['GET', 'POST'])
 def sign_up():
     if request.method == 'POST':
@@ -73,4 +67,4 @@ def sign_up():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for("views.home"))
+    return redirect(url_for("views.home"))"""

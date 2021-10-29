@@ -1,407 +1,399 @@
 from os import set_inheritable
 from app import db
 
+class User(db.Model):
+    __tablename__ = "users"
 
-class Usuario(db.Model):
-    __tablename__ = "usuarios"
-
-    id_usuario = db.Column(db.Integer, primary_key=True)
-    fk_pessoa = db.Column(db.Integer, db.ForeignKey("pessoas.id_pessoa"))
+    id_user = db.Column(db.Integer, primary_key=True)
+    fk_person = db.Column(db.Integer, db.ForeignKey("person.id_person"))
     email = db.Column(db.String(80), unique=True, nullable=False)
-    senha = db.Column(db.String(80), nullable=False)
-    tipo = db.Column(db.String(30), nullable=False)
+    password = db.Column(db.String(80), nullable=False)
+    type = db.Column(db.String(30), nullable=False)
     status = db.Column(db.Boolean, nullable=False)
 
-    pessoa = db.relationship("Pessoa", foreign_keys=fk_pessoa)
+    person = db.relationship("Person", foreign_keys=fk_person)
 
-    def __init__(self, fk_pessoa, email, senha, tipo, status):
-        self.fk_pessoa = fk_pessoa
+    def __init__(self, fk_person, email, password, type, status):
+        self.fk_person = fk_person
         self.email = email
-        self.senha = senha
-        self.tipo = tipo
+        self.password = password
+        self.type = type
         self.status = status
 
     def __repr__(self):
-        return "<Usuario %r>" % self.email
+        return "<User %r>" % self.email
 
-
-class Pessoa(db.Model):
-    __tablename__ = "pessoas"
+class Person(db.Model):
+    __tablename__ = "person"
     
-    id_pessoa = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(80), nullable=False)
-    dt_nascimento = db.Column(db.Date, nullable=False)
+    id_person = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    birth_date = db.Column(db.Date, nullable=False)
     sexo = db.Column(db.String(30), nullable=False)
     cpf = db.Column(db.String(50), unique=True, nullable=False)
     rg = db.Column(db.String(50), unique=True, nullable=False)
 
-    def __init__(self, nome, dt_nascimento, sexo, cpf, rg):
-        self.nome = nome
-        self.dt_nascimento = dt_nascimento
+    def __init__(self, name, birth_date, sexo, cpf, rg):
+        self.name = name
+        self.birth_date = birth_date
         self.sexo = sexo
         self.cpf = cpf
         self.rg = rg
     
     def __repr__(self):
-        return "<Pessoa %r" % self.nome
+        return "<Person %r" % self.name
 
+class Telephone(db.Model):
+    __tablename__ = "telephones"
 
-class Telefone(db.Model):
-    __tablename__ = "telefones"
+    id_telephone = db.Column(db.Integer, primary_key=True)
+    fk_person = db.Column(db.Integer, db.ForeignKey("person.id_person"))
+    type = db.Column(db.String(20), nullable=False)
+    number = db.Column(db.String(30), unique=True, nullable=False)
+    desc = db.Column(db.String(100), nullable=True)
 
-    id_telefone = db.Column(db.Integer, primary_key=True)
-    fk_pessoa = db.Column(db.Integer, db.ForeignKey("pessoas.id_pessoa"))
-    tipo = db.Column(db.String(20), nullable=False)
-    numero = db.Column(db.String(30), unique=True, nullable=False)
-    descricao = db.Column(db.String(100), nullable=True)
+    person = db.relationship("Person", foreign_keys=fk_person)
 
-    pessoa = db.relationship("Pessoa", foreign_keys=fk_pessoa)
+    def __init__(self, fk_person, type, number, desc):
+        self.fk_person = fk_person
+        self.type = type
+        self.number = number
+        self.desc = desc
 
-    def __init__(self, fk_pessoa, tipo, numero, descricao):
-        self.fk_pessoa = fk_pessoa(fk_pessoa)
-        self.tipo = tipo
-        self.numero = numero
-        self.descricao = descricao
-    
     def __repr__(self):
-        return "<Telefone %r" % self.numero
+        return "<Telephone %r" % self.number
 
-class Endereco(db.Model):
-    __tablename__ = "enderecos"
+class Address(db.Model):
+    __tablename__ = "addresses"
 
-    id_endereco = db.Column(db.Integer, primary_key=True)
-    fk_pessoa = db.Column(db.Integer, db.ForeignKey("pessoas.id_pessoa"))
-    fk_cidade = db.Column(db.Integer, db.ForeignKey("cidades.id_cidade"))
-    logradouro = db.Column(db.String(200), nullable=False)
-    bairro = db.Column(db.String(100), nullable=False)
-    numero = db.Column(db.String(12), nullable=False)
-    complemento = db.Column(db.String(200), nullable=False)
-    titulo = db.Column(db.String(200), nullable=False)
+    id_address = db.Column(db.Integer, primary_key=True)
+    fk_person = db.Column(db.Integer, db.ForeignKey("person.id_person"))
+    fk_city = db.Column(db.Integer, db.ForeignKey("cities.id_city"))
+    public_place = db.Column(db.String(200), nullable=False)
+    district = db.Column(db.String(100), nullable=False)
+    number = db.Column(db.String(12), nullable=False)
+    complement = db.Column(db.String(200), nullable=False)
 
-    pessoa = db.relationship("Pessoa", foreign_keys=fk_pessoa)
-    cidade = db.relationship("Cidade", foreign_keys=fk_cidade)
+    person = db.relationship("Person", foreign_keys=fk_person)
+    city = db.relationship("City", foreign_keys=fk_city)
 
-    def __init__(self, fk_pessoa, fk_cidade, logradouro, bairro, numero, complemento, titulo):
-        self.fk_pessoa = fk_pessoa
-        self.fk_cidade = fk_cidade
-        self.logradouro = logradouro
-        self.bairro = bairro
-        self.numero = numero
-        self.complemento = complemento
+    def __init__(self, fk_person, fk_city, public_place, district, number, complement, titulo):
+        self.fk_person = fk_person
+        self.fk_city = fk_city
+        self.public_place = public_place
+        self.district = district
+        self.number = number
+        self.complement = complement
         self.titulo = titulo
     
     def __repr__(self):
-        return "<Endereco %r" % self.logradouro
+        return "<Endereco %r" % self.public_place
 
+class City(db.Model):
+    __tablename__ = "cities"
+
+    id_city = db.Column(db.Integer, primary_key=True)
+    fk_state = db.Column(db.Integer, db.ForeignKey("states.id_state"))
+    name = db.Column(db.String(100), nullable=False)
+    desc = db.Column(db.String(100), nullable=True)
+
+    state = db.relationship("State", foreign_keys=fk_state)
+
+    def __init__(self, fk_state, name, desc):
+        self.fk_state = fk_state
+        self.name = name
+        self.desc = desc
     
-class Cidade(db.Model):
-    __tablename__ = "cidades"
-
-    id_cidade = db.Column(db.Integer, primary_key=True)
-    fk_estado = db.Column(db.Integer, db.ForeignKey("estados.id_estado"))
-    nome = db.Column(db.String(100), nullable=False)
-    descricao = db.Column(db.String(100), nullable=True)
-
-    estado = db.relationship("Estado", foreign_keys=fk_estado)
-
-    def __init__(self, fk_estado, nome, descricao):
-        self.fk_estado = fk_estado
-        self.nome = nome
-        self.descricao = descricao
-    
     def __repr__(self):
-        return "<Cidade %r" % self.nome
+        return "<City %r" % self.name
 
+class State(db.Model):
+    __tablename__ = "states"
 
-class Estado(db.Model):
-    __tablename__ = "estados"
+    id_state = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    initials = db.Column(db.String(10), nullable=False)  #sigla
+    desc = db.Column(db.String(100), nullable=False)  #descrição
 
-    id_estado = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100), nullable=False)
-    sigla = db.Column(db.String(10), nullable=False)
-    descricao = db.Column(db.String(100), nullable=False)
-
-    def __init__(self, nome, sigla, descricao):
-        self.nome = nome
-        self.sigla = sigla
-        self.descricao = descricao
+    def __init__(self, name, initials, desc):
+        self.name = name
+        self.initials = initials
+        self.desc = desc
 
     def __repr__(self):
-        return "<Estado %r" % self.nome
+        return "<State %r" % self.name
 
-##/// finalização parte de usuário e pessoa
+##/// finalização parte de usuário e person
 
 
-class Proprietario(db.Model):
-    __tablename__ = "proprietarios"
+class Owner(db.Model):
+    __tablename__ = "owners"
 
-    id_proprietario = db.Column(db.Integer, primary_key=True)
-    fk_usuario = db.Column(db.Integer, db.ForeignKey("usuarios.id_usuario"))
-    fk_estabelecimento = db.Column(db.Integer, db.ForeignKey("estabelecimentos.id_estabelecimento"))
+    id_owner = db.Column(db.Integer, primary_key=True)
+    fk_user = db.Column(db.Integer, db.ForeignKey("users.id_user"))
+    fk_establishment = db.Column(db.Integer, db.ForeignKey("establishments.id_establishment"))
 
-    usuario = db.relationship("Usuario", foreign_keys=fk_usuario)
-    estabelecimento = db.relationship("Estabelecimento", foreign_keys=fk_estabelecimento)
+    user = db.relationship("User", foreign_keys=fk_user)
+    establishment = db.relationship("Establishment", foreign_keys=fk_establishment)
 
-    def __init__(self, fk_usuario, fk_estabelecimento):
-        self.fk_usuario = fk_usuario
-        self.fk_estabelecimento = fk_estabelecimento
+    def __init__(self, fk_user, fk_establishment):
+        self.fk_user = fk_user
+        self.fk_establishment = fk_establishment
 
     def __repr__(self):
-        return "<Estado %r" % self.id_proprietario
+        return "<State %r" % self.id_owner
 
-class Estabelecimento(db.Model):
-    __tablename__ = "estabelecimentos"
+class Establishment(db.Model):
+    __tablename__ = "establishments"
 
-    id_estabelecimento = db.Column(db.Integer, primary_key=True)
-    razao_social = db.Column(db.String(200), nullable=False)
-    nome = db.Column(db.String(200), nullable=False)
+    id_establishment = db.Column(db.Integer, primary_key=True)
+    social_reason = db.Column(db.String(200), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
     cnpj = db.Column(db.String(100), unique=True, nullable=False)
 
-    def __init__(self, razao_social, nome, cnpj):
-        self.razao_social = razao_social
-        self.nome = nome
+    def __init__(self, social_reason, name, cnpj):
+        self.social_reason = social_reason
+        self.name = name
         self.cnpj = cnpj
 
     def __repr__(self):
-        return "<Estabelecimento %r" % self.razao_social
+        return "<Establishment %r" % self.social_reason
 
-class Veiculo(db.Model):
-    __tablename__ = "veiculos"
+class Vehicle(db.Model):
+    __tablename__ = "vehicles"
 
-    id_veiculo = db.Column(db.Integer, primary_key=True)
-    fk_usuario = db.Column(db.Integer, db.ForeignKey("usuarios.id_usuario")) 
-    fk_modelo = db.Column(db.Integer, db.ForeignKey("modelos_veiculos.id_modelo_veiculo")) 
-    placa = db.Column(db.String(40), nullable=False)
-    cor = db.Column(db.String(50), nullable=False)
+    id_vehicle = db.Column(db.Integer, primary_key=True)
+    fk_user = db.Column(db.Integer, db.ForeignKey("users.id_user")) 
+    fk_model = db.Column(db.Integer, db.ForeignKey("vehicle_models.id_modelo_vehicle")) 
+    plate = db.Column(db.String(40), nullable=False)
+    color = db.Column(db.String(50), nullable=False)
     renavam = db.Column(db.String(60), unique=True, nullable=False)
     chassi = db.Column(db.String(60), unique=True, nullable=False)
 
-    usuario = db.relationship("Usuario", foreign_keys=fk_usuario)
-    modelo = db.relationship("Modelo_Veiculo", foreign_keys=fk_modelo)
+    user = db.relationship("User", foreign_keys=fk_user)
+    modelo = db.relationship("Vehicle_model", foreign_keys=fk_model)
 
-    def __init__(self,fk_usuario, fk_modelo, placa, cor, renavam, chassi):
-        self.fk_usuario = fk_usuario
-        self.fk_modelo = fk_modelo
-        self.placa = placa
-        self.cor = cor
+    def __init__(self,fk_user, fk_model, plate, color, renavam, chassi):
+        self.fk_user = fk_user
+        self.fk_model = fk_model
+        self.plate = plate
+        self.color = color
         self.renavam = renavam
         self.chassi = chassi
 
     def __repr__(self):
-        return "<Veiculo %r" % self.placa
+        return "<Vehicle %r" % self.plate
 
-class Modelo_Veiculo(db.Model):
-    __tablename__ = "modelos_veiculos"
+class Vehicle_Model(db.Model):
+    __tablename__ = "vehicle_models"
 
-    id_modelo_veiculo = db.Column(db.Integer, primary_key=True)
-    fk_marca_veiculo = db.Column(db.Integer, db.ForeignKey("marcas_veiculos.id_marca_veiculo")) 
-    fk_categoria_veiculo = db.Column(db.Integer, db.ForeignKey("categorias_veiculos.id_categoria_veiculo")) 
-    nome = db.Column(db.String(40), nullable=True)
-    descricao = db.Column(db.String(100), nullable=True)
+    id_modelo_vehicle = db.Column(db.Integer, primary_key=True)
+    fk_vehicle_brand = db.Column(db.Integer, db.ForeignKey("vehicles_brands.id_vehicle_brand")) 
+    fk_vehicle_category = db.Column(db.Integer, db.ForeignKey("vehicle_category.id_vehicle_category")) 
+    name = db.Column(db.String(40), nullable=True)
+    desc = db.Column(db.String(100), nullable=True)
 
-    marca_veiculo = db.relationship("Marca_Veiculo", foreign_keys=fk_marca_veiculo)
-    categoria_veiculo = db.relationship("Categoria_Veiculo", foreign_keys=fk_categoria_veiculo)
+    vehicle_brand = db.relationship("Vehicle_Brand", foreign_keys=fk_vehicle_brand)
+    vehicle_category = db.relationship("Vehicle_Category", foreign_keys=fk_vehicle_category)
 
-    def __init__(self, fk_marca_veiculo, fk_categoria_veiculo, nome, descricao):
-        self.fk_marca_veiculo = fk_marca_veiculo
-        self.fk_categoria_veiculo = fk_categoria_veiculo
-        self.nome = nome
-        self.descricao = descricao
-
+    def __init__(self, fk_vehicle_brand, fk_vehicle_category, name, desc):
+        self.fk_vehicle_brand = fk_vehicle_brand
+        self.fk_vehicle_category = fk_vehicle_category
+        self.name = name
+        self.desc = desc
 
     def __repr__(self):
-        return "<Modelo_Veiculo %r" % self.nome  
+        return "<Vehicle_model %r" % self.name  
 
+class Vehicle_Category(db.Model):
+    __tablename__ = "vehicle_category"
 
-class Categoria_Veiculo(db.Model):
-    __tablename__ = "categorias_veiculos"
+    id_vehicle_category = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(40), unique=True, nullable=False)
+    desc = db.Column(db.String(40), nullable=False)
 
-    id_categoria_veiculo = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(40), unique=True, nullable=False)
-    descricao = db.Column(db.String(40), nullable=False)
-
-    def __init__(self, id_categoria_veiculo, nome, descricao):
-        self.id_categoria_veiculo = id_categoria_veiculo
-        self.nome = nome
-        self.descricao = descricao
+    def __init__(self, id_vehicle_category, name, desc):
+        self.id_vehicle_category = id_vehicle_category
+        self.name = name
+        self.desc = desc
     
     def __repr__(self):
-        return "<Categoria_Veiculo %r" % self.nome
+        return "<Vehicle_Category %r" % self.name
 
-class Marca_Veiculo(db.Model):
-    __tablename__ = "marcas_veiculos"
+class Vehicle_Brand(db.Model):
+    __tablename__ = "vehicles_brands"
 
-    id_marca_veiculo = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(40), unique=True, nullable=False)
-    descricao = db.Column(db.String(40), nullable=False)
+    id_vehicle_brand = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(40), unique=True, nullable=False)
+    desc = db.Column(db.String(40), nullable=False)
 
-    def __init__(self, id_marca_veiculo, nome, descricao):
-        self.id_marca_veiculo = id_marca_veiculo
-        self.nome = nome
-        self.descricao = descricao
+    def __init__(self, id_vehicle_brand, name, desc):
+        self.id_vehicle_brand = id_vehicle_brand
+        self.name = name
+        self.desc = desc
     
     def __repr__(self):
-        return "<Marca_Veiculo %r" % self.nome    
+        return "<Vehicle_Brand %r" % self.name    
 
 ####  Tabelas específicas de locação
 
-class Locacao(db.Model):
-    __tablename__ = "locacoes"
+class Rent(db.Model):
+    __tablename__ = "rents"
 
-    id_locacao = db.Column(db.Integer, primary_key=True)
-    fk_forma_pagamento = db.Column(db.Integer, db.ForeignKey("formas_pagamento.id_forma_pagamento")) 
-    fk_veiculo = db.Column(db.Integer, db.ForeignKey("veiculos.id_veiculo")) 
-    fk_usuario = db.Column(db.Integer, db.ForeignKey("usuarios.id_usuario")) 
-    fk_vaga = db.Column(db.Integer, db.ForeignKey("vagas.id_vaga")) 
-    hora_entrada = db.Column(db.DateTime, nullable=False)
-    hora_saida = db.Column(db.DateTime, nullable=False)
-    valor_hora = db.Column(db.Float, nullable=False)
-    descricao = db.Column(db.String(400), nullable=False)
+    id_rent = db.Column(db.Integer, primary_key=True)
+    fk_payment_method = db.Column(db.Integer, db.ForeignKey("payment_method.id_payment_method")) 
+    fk_vehicle = db.Column(db.Integer, db.ForeignKey("vehicles.id_vehicle")) 
+    fk_user = db.Column(db.Integer, db.ForeignKey("users.id_user")) 
+    fk_parking_space = db.Column(db.Integer, db.ForeignKey("parking_spaces.id_parking_space")) 
+    entry_time = db.Column(db.DateTime, nullable=False)
+    exit_time = db.Column(db.DateTime, nullable=False)
+    hourly_value = db.Column(db.Float, nullable=False)
+    desc = db.Column(db.String(400), nullable=False)
 
-    forma_pagamento = db.relationship("Forma_Pagamento", foreign_keys=fk_forma_pagamento)
-    veiculo = db.relationship("Veiculo", foreign_keys=fk_veiculo)
-    usuario = db.relationship("Usuario", foreign_keys=fk_usuario)
-    vaga = db.relationship("Vaga", foreign_keys=fk_vaga)
+    payment_method = db.relationship("Payment_Method", foreign_keys=fk_payment_method)
+    vehicle = db.relationship("Vehicle", foreign_keys=fk_vehicle)
+    user = db.relationship("User", foreign_keys=fk_user)
+    parking_space = db.relationship("Parking_Space", foreign_keys=fk_parking_space)
     
-    def __init__(self, fk_forma_pagamento, fk_veiculo, fk_usuario, fk_vaga, hora_entrada, hora_saida, valor_hora, descricao):
-        self.fk_forma_pagamento = fk_forma_pagamento
-        self.fk_veiculo = fk_veiculo
-        self.fk_usuario = fk_usuario
-        self.fk_vaga = fk_vaga
-        self.hora_entrada = hora_entrada
-        self.hora_saida = hora_saida
-        self.valor_hora = valor_hora
-        self.descricao = descricao
+    def __init__(self, fk_payment_method, fk_vehicle, fk_user, fk_parking_space, entry_time, exit_time, hourly_value, desc):
+        self.fk_payment_method = fk_payment_method
+        self.fk_vehicle = fk_vehicle
+        self.fk_user = fk_user
+        self.fk_parking_space = fk_parking_space
+        self.entry_time = entry_time
+        self.exit_time = exit_time
+        self.hourly_value = hourly_value
+        self.desc = desc
 
     def __repr__(self):
-        return "<Locacao %r" % self.id_locacao            
+        return "<Rent %r" % self.id_rent        
 
-class Servico_Locacao(db.Model):
-    __tablename__ = "servicos_locacao"
+class Rent_Service(db.Model):
+    __tablename__ = "services_rental"
 
-    id_servico_locacao = db.Column(db.Integer, primary_key=True)
-    fk_locacao = db.Column(db.Integer, db.ForeignKey("locacoes.id_locacao")) 
-    fk_servico = db.Column(db.Integer, db.ForeignKey("servicos.id_servico")) 
+    id_service_rent = db.Column(db.Integer, primary_key=True)
+    fk_rent = db.Column(db.Integer, db.ForeignKey("rents.id_rent")) 
+    fk_service = db.Column(db.Integer, db.ForeignKey("services.id_service")) 
     status = db.Column(db.Boolean, nullable=False)
-    descricao = db.Column(db.String(500), nullable=False)
+    desc = db.Column(db.String(500), nullable=False)
 
-    locacao = db.relationship("Locacao", foreign_keys=fk_locacao)
-    servico = db.relationship("Servico", foreign_keys=fk_servico)
+    rental = db.relationship("Leases", foreign_keys=fk_rent)
+    service = db.relationship("Service", foreign_keys=fk_service)
 
-    def __init__(self, fk_locacao, fk_servico, status, descricao):
-        self.fk_locacao = fk_locacao
-        self.fk_servico = fk_servico
+    def __init__(self, fk_rent, fk_service, status, desc):
+        self.fk_rent = fk_rent
+        self.fk_service = fk_service
         self.status = status
-        self.descricao = descricao
+        self.desc = desc
 
     def __repr__(self):
-        return "<Servico_Locacao %r" % self.id_servico_locacao
+        return "<Rent_Service %r" % self.id_service_rent
  
-class Servico(db.Model):
-    __tablename__ = "servicos"
+class Service(db.Model):
+    __tablename__ = "services"
 
-    id_servico = db.Column(db.Integer, primary_key=True)
-    fk_categoria_servico = db.Column(db.Integer, db.ForeignKey("categorias_servicos.id_categoria_servico")) 
-    nome = db.Column(db.String(80), nullable=False)
-    descricao = db.Column(db.String(500), nullable=False)
+    id_service = db.Column(db.Integer, primary_key=True)
+    fk_service_category = db.Column(db.Integer, db.ForeignKey("service_category.id_service_category")) 
+    name = db.Column(db.String(80), nullable=False)
+    desc = db.Column(db.String(500), nullable=False)
     valor = db.Column(db.Float, nullable=False)
 
-    categoria_servico = db.relationship("Categoria_Servico", foreign_keys=fk_categoria_servico)
+    service_category = db.relationship("Service_Category", foreign_keys=fk_service_category)
 
-    def __init__(self, fk_categoria_servico, nome, descricao, valor):
-        self.fk_categoria_servico = fk_categoria_servico
-        self.nome = nome
-        self.descricao = descricao
+    def __init__(self, fk_service_category, name, desc, valor):
+        self.fk_service_category = fk_service_category
+        self.name = name
+        self.desc = desc
         self.valor = valor
 
     def __repr__(self):
-        return "<Servico %r" % self.nome
+        return "<Service %r" % self.name
 
-class Categoria_Servico(db.Model):
-    __tablename__ = "categorias_servicos"
+class Service_Category(db.Model):
+    __tablename__ = "service_category"
 
-    id_categoria_servico = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(80), nullable=False)
-    descricao = db.Column(db.String(500), nullable=False)
+    id_service_category = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    desc = db.Column(db.String(500), nullable=False)
 
-    def __init__(self, nome, descricao):
-        self.nome = nome
-        self.descricao = descricao
-
-    def __repr__(self):
-        return "<Categoria_Servico %r" % self.nome
-
-
-class Forma_Pagamento(db.Model):
-    __tablename__ = "formas_pagamento"
-
-    id_forma_pagamento = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(80), nullable=False)
-    descricao = db.Column(db.String(500), nullable=True)
-
-    def __init__(self, nome, descricao):
-        self.nome = nome
-        self.descricao = descricao
+    def __init__(self, name, desc):
+        self.name = name
+        self.desc = desc
 
     def __repr__(self):
-        return "<Forma_Pagamento %r" % self.nome
+        return "<Service_Category %r" % self.name
 
-class Vaga(db.Model):
-    __tablename__ = "vagas"
 
-    id_vaga = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(80), nullable=False)
-    andar = db.Column(db.String(10), nullable=False)
-    localizacao = db.Column(db.String(200), nullable=False)
+class Payment_Method(db.Model):
+    __tablename__ = "payment_method"
+
+    id_payment_method = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    desc = db.Column(db.String(500), nullable=True)
+
+    def __init__(self, name, desc):
+        self.name = name
+        self.desc = desc
+
+    def __repr__(self):
+        return "<Payment_Method %r" % self.name
+
+class Parking_Space(db.Model):
+    __tablename__ = "parking_spaces"
+
+    id_parking_space = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    floor = db.Column(db.String(10), nullable=False)
+    localization = db.Column(db.String(200), nullable=False)
     status = db.Column(db.Boolean, nullable=False)
-    descricao = db.Column(db.String(500), nullable=True)
+    desc = db.Column(db.String(500), nullable=True)
 
-    def __init__(self, nome, andar, localizacao, status, descricao):
-        self.nome = nome
-        self.andar = andar
-        self.localizacao = localizacao
+    def __init__(self, name, floor, localization, status, desc):
+        self.name = name
+        self.floor = floor
+        self.localization = localization
         self.status = status
-        self.descricao = descricao
+        self.desc = desc
 
     def __repr__(self):
-        return "<Vaga %r" % self.nome
+        return "<Parking_Space %r" % self.name
 
 class Sensor(db.Model):
-    __tablename__ = "sensores"
+    __tablename__ = "sensors"
 
     id_sensor = db.Column(db.Integer, primary_key=True)
-    fk_tipo_sensor = db.Column(db.Integer, db.ForeignKey("tipos_sensores.id_tipo_sensor")) 
-    fk_vaga = db.Column(db.Integer, db.ForeignKey("vagas.id_vaga")) 
-    nome = db.Column(db.String(80), nullable=False)
+    fk_sensor_type = db.Column(db.Integer, db.ForeignKey("sensors_types.id_sensor_type")) 
+    fk_parking_space = db.Column(db.Integer, db.ForeignKey("parking_spaces.id_parking_space")) 
+    name = db.Column(db.String(80), nullable=False)
     status = db.Column(db.Boolean, nullable=False)
     modelo = db.Column(db.String(200), nullable=False)
     observacoes = db.Column(db.String(500), nullable=False)
 
-    tipo_sensor = db.relationship("Tipo_Sensor", foreign_keys=fk_tipo_sensor)
-    vaga = db.relationship("Vaga", foreign_keys=fk_vaga)
+    sensor_type = db.relationship("Sensor_Type", foreign_keys=fk_sensor_type)
+    parking_space = db.relationship("Parking_Space", foreign_keys=fk_parking_space)
 
-    def __init__(self, fk_tipo_sensor, fk_vaga, nome, status, modelo, observacoes):
-        self.fk_tipo_sensor = fk_tipo_sensor
-        self.fk_vaga = fk_vaga
-        self.nome = nome
+    def __init__(self, fk_sensor_type, fk_parking_space, name, status, modelo, observacoes):
+        self.fk_sensor_type = fk_sensor_type
+        self.fk_parking_space = fk_parking_space
+        self.name = name
         self.status = status
         self.modelo = modelo
         self.observacoes = observacoes
 
     def __repr__(self):
-        return "<Vaga %r" % self.nome
+        return "<Sensor %r" % self.name
 
-class Tipo_Sensor(db.Model):
-    __tablename__ = "tipos_sensores"
+class Sensor_Type(db.Model):
+    __tablename__ = "sensors_types"
     
-    id_tipo_sensor = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(80), nullable=False)
-    descricao = db.Column(db.String(200), nullable=False)
+    id_sensor_type = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    desc = db.Column(db.String(200), nullable=False)
 
-    def __init__(self, id_tipo_sensor, nome, descricao):
-        self.id_tipo_sensor = id_tipo_sensor
-        self.nome = nome
-        self.descricao = descricao
+    def __init__(self, id_sensor_type, name, desc):
+        self.id_sensor_type = id_sensor_type
+        self.name = name
+        self.desc = desc
 
     def __repr__(self):
-        return "<Tipo_Sensor %r" % self.nome
+        return "<Sensor_Type %r" % self.name

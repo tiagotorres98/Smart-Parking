@@ -1,9 +1,7 @@
 DEBUG = True
 
-SQLALCHEMY_DATABASE_URI = "postgresql://postgres:admin@localhost/bd_sp"
-#SQLALCHEMY_DATABASE_URI = "postgresql://postgres:admin@localhost/smartparking"
+SQLALCHEMY_DATABASE_URI = "postgresql://postgres:admin@localhost/smart_parking"
 
-#SQLALCHEMY_DATABASE_URI = "sqlite:///db_smartparking.db"
-SQLALCHEMY_TRACK_MODIFICATIONS = True
+###exemplo sqlite ##SQLALCHEMY_DATABASE_URI = "sqlite:///db_smartparking.db"
 
-#SQLALCHEMY_TRACK_MODIFICATIONS = True
+QLALCHEMY_TRACK_MODIFICATIONS = True
