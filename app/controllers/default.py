@@ -1,130 +1,302 @@
 #from _typeshed import OpenBinaryMode, OpenBinaryModeReading
-from flask import render_template #método para renderizar templates HTML
-from flask import request
+import json
+from datetime import date, datetime
+from re import *
+from sqlalchemy.sql.base import Options
+
 from app import app, db
+from app.controllers import customSession
+from app.models.authenticationServices.authenticationVerify import \
+    authenticationVerify
+from app.models.registerServices.persistRegister import PersistRegister
+from app.models.repository.creditCardRepository import CreditCardRepository
+from app.models.repository.historicRepository import HistoricRepository
+from app.models.repository.monthlyLeaseRepository import MonthlyLeaseRepository
+from app.models.repository.parkingRepository import ParkingRepository
+from app.models.repository.servicesRepository import ServicesRepository
 from app.models.tables import *
-import datetime as dt
+from app.models.validators.userRegisterValidator import userRegisterValidator
+from flask import render_template  # método para renderizar templates HTML,
+from flask import Blueprint, flash, redirect, request, session, url_for
+from flask_login import LoginManager, current_user, login_required, login_user
+from flask_session import Session
+from sqlalchemy.sql.expression import case
+from werkzeug.security import check_password_hash, generate_password_hash
+from app.controllers.customSession import CustomSession
+from app.models.repository.UserRepository import UserRepository
+from app.models.optionsServices.options import *
+from app.models.homeServices.home import *
+
+
+app.secret_key = "EgcaT3Qm#a@vf8!EWV*!^nGaQmlXNcHErWN*"
 
 @app.route("/")
 def index():
     return "Hello mundo!"
 
-#Início das rotas
+userEmailSession = CustomSession()
 
+########################## INICIAL PAGES #####################################
+#   LOGIN PAGE
+#   REGISTER PAGE
+#   FORGOT PASSWORD
+########################## SCREEN LOGIN ######################################
+@app.route("/login", methods=['POST', 'GET'])
+def login():   
+
+    postJson = request.data
+    data = json.loads(postJson)
+    email       =   data['email']
+    password    =   data['password']
+    arrayJson = authenticationVerify().verify(email,password)
+    if arrayJson["mensagem"] == "true":
+        userEmailSession.setEmailUser(email)
+    return json.dumps(arrayJson)
+#-----------------------------------------------------------------
+#------------------------USER REGISTER----------------------------
 @app.route("/register", methods=['POST', 'GET'])
-def cadastrarUsuario(nome, dt_nascimento, sexo, cpf, rg):   
-    nome = request.args.get('nome')
-    email = request.args.get('email')
-    endereco = request.args.get('endereco')
-    sexo = request.args.get('sexo')
-    CPF = request.args.get('cpf')
-    rg = request.args.get('rg')
-    dt_nascimento = request.args.get('dt_nascimento')
-
-    senha = request.args.get('senha')
-    tipo = request.args.get('tipo')
-    status = request.args.get('status')
+def registerUser():   
     
-    person = Person(nome, dt_nascimento, sexo, cpf, rg)
+    postJson = request.data.decode('utf8')
+    data = json.loads(postJson)
+    
+    name        =   data['name']
+    cpf         =   data['cpf']
+    email       =   data['email']
+    address     =   data['address']
+    phone       =   data['phone']
+    birthday    =   data['birthday']
+    sex         =   data['sex']
+    password    =   data['password']
 
-    db.session.add(person)
-    db.session.commit()
+    carModelData        =   data['car']['model']
+    carBrandData        =   data['car']['brand']
+    carColorData        =   data['car']['color']
+    carChassiData       =   data['car']['chassi']
+    carRenavamData      =   data['car']['renavam']
+    carPlateData       =   data['car']['plaque']
+    
 
-    usuario = User(person.id_pessoa, email, senha, tipo, status)
+    birthToInsert = birthday.replace("T"," ").replace("Z","").replace(".000","")
 
-    db.session.add(usuario)
-    db.session.commit()
-
-    return "Cadastro criado com sucesso!"
-
-
-@app.route("/estacionamentos", methods=['GET'])
-def estacionamentos():
-    return db.Estabelecimento.list()
-
-
-@app.route("/estacionamento", methods=['POST', 'GET'])
-def estacionamento():
-    id_estabelecimento = request.args.get('id_estabelecimento')
-    return db.Estabelecimento.filter(by='id_estabelecimento')
-
-
-@app.route("/confirmar-aluguel", methods=['POST', 'GET'])
-def confirmar_aluguel():
-    id_estabelecimento = request.args.get('id_estabelecimento')
-    fk_veiculo = request.args.get('fk_veiculo')
-    fk_vaga = request.args.get('fk_vaga')
-    fk_usuario = request.args.get('fk_usuario')
-    fk_forma_pagamento = request.args.get('id_forma_pagamento')
-    hora_entrada = request.args.get('hora_entrada')
-    hora_saida = request.args.get('hora_saida')
-    valor_hora = request.args.get('valor_hora')
-    desc = request.args.get('desc')
-
-
-    locacao = Rent(fk_forma_pagamento, fk_veiculo, fk_usuario, fk_vaga, hora_entrada, hora_saida, valor_hora, descricao)
-
-    db.session.add(locacao)
-    db.session.commit()
-
-    return db.Estabelecimento.filter(by='id_estabelecimento')
+    person          =   Person(name,birthToInsert,sex,cpf)
+    user            =   User(None,email,generate_password_hash(password, method='sha256'),'costumer',1)
+    car             =   Vehicle(None,carModelData,carPlateData,carColorData,carRenavamData,carChassiData,carBrandData)
+    personAdress    =   Address(None,address)
+    personPhone     =   Telephone(None,'Celular',phone)
+    
+    
+    arrayJson = userRegisterValidator().verifyAllRegister(user,person,phone,car)
+    if arrayJson["mensagem"] == "true":
+        result =  PersistRegister().persist(person,user,car,personAdress,personPhone) 
+        if result != "":
+           arrayJson["mensagem"] = result
+ 
+    return json.dumps(arrayJson)
+#----------------------------------------------------------------------
+########################## END OF INICIAL PAGES ##############################
 
 
-@app.route("/vagas", methods=['POST'])
-def vagas():
-    id_estabelecimento = request.args.get('id_estabelecimento')
-    return db.Vagas.filter(by=id_estabelecimento)
+############################ OPTIONS PAGES ###################################
+#   OPTIONS
+#   REGISTERS INFORMATION
+#   MONTHLY LEASE 
+#   PAYMENT MANAGEMENT
+#   HISTORIC
+#   LOGOUT
+###############################################################################
+#---------------------OPTIONS && REGISTERS INFORMATIONS------------------------
 
+## GET USERS INFORMATION TO DISPLAY ON MAIN SCREEN
+## GET USERS INFORMATION TO DISPLAY REGISTERS INFORMATIONS
+@app.route("/user", methods=['GET'])
+def users():
+    result = UserRepository().getAllUserDataByEmail(userEmailSession.getEmailUser())
+    returnJson = json.dumps(UserRepository().resultToJson(result))
+    return returnJson
 
+ #---------------------REGISTERS INFORMATIONS -> PERFIL EDIT--------------------
+## UPDATE USERS DATA
+@app.route("/updateUser", methods=['POST','GET'])
+def updateUserData():
 
+    postJson = request.data.decode('utf8')
+    data = json.loads(postJson)
 
-@app.route("/avaliacao", methods=['POST', 'GET'])
-def avaliacao():
-    id_estabelecimento = request.args.get('id_estabelecimento')
-    nota = request.args.get('nota')
-    avaliacao = request.args.get('avaliacao')
+    
 
-    return db.Estabelecimento.filter(by='id_estabelecimento')
+    email       =   data['email']
+    address     =   data['address']
+    phone       =   data['phone']
+    password    =   data['password']
 
+    carModelData        =   data['car']['model']
+    carBrandData        =   data['car']['brand']
+    carColorData        =   data['car']['color']
 
+    if authenticationVerify().verify(userEmailSession.getEmailUser(),password)["mensagem"] == "true":
+        result = UpdateRegister().update(email,address,phone,carModelData,carBrandData,carColorData)
+    else:
+        result = {"mensagem":"Senha Incorreta. Digite Novamente."}
+    returnJson = json.dumps(result)
+    return returnJson
+#------------------------------------------------------------------------------
+#----------------------------MONTHLY LEASE-------------------------------------
+@app.route("/monthlyLease", methods=['GET'])
+def monthlyLease():
+    user = UserRepository().getAllUserDataByEmail(userEmailSession.getEmailUser())
+    leases = MonthlyLeaseRepository().getByIdUser(user.User.id)
+   
+    returnJson = json.dumps(MonthlyLeaseRepository().returnToJson(leases))
+    return returnJson
 
-class User(db.Model):
-    """Data model for user accounts."""
+@app.route("/cancelMonthlyLease", methods=['POST','GET'])
+def cancelMonthlyLease():
+    postJson = request.data.decode('utf8')
+    data = json.loads(postJson)
 
-    __tablename__ = "flasksqlalchemy-tutorial-users"
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), index=False, unique=True, nullable=False)
-    email = db.Column(db.String(80), index=True, unique=True, nullable=False)
-    created = db.Column(db.DateTime, index=False, unique=False, nullable=False)
-    bio = db.Column(db.Text, index=False, unique=False, nullable=True)
-    admin = db.Column(db.Boolean, index=False, unique=False, nullable=False)
+    idLease = data['idLease']
+    password = data['password']
 
-    def __repr__(self):
-        return "<User {}>".format(self.username)
+    if authenticationVerify().verify(userEmailSession.getEmailUser(),password)["mensagem"] == "true":
+        result = CancelMonthlyLease.cancel(idLease)
+    else:
+        result = {"mensagem":"Senha Incorreta. Digite Novamente."}
+    
+    returnJson = json.dumps(result)
 
+    return returnJson
 
+#------------------------------------------------------------------------------
+#---------------------------PAYMENT MANAGEMENT---------------------------------
+@app.route("/creditCard", methods=['GET'])
+def getCreditCard():
 
-@app.route("/", methods=["GET"])
-def user_records():
-    """Create a user via query string parameters."""
-    username = request.args.get("user")
-    email = request.args.get("email")
-    if username and email:
-        existing_user = User.query.filter(
-            User.username == username or User.email == email
-        ).first()
-        if existing_user:
-            return "already created!"
-        new_user = User(
-            username=username,
-            email=email,
-            created=dt.now(),
-            bio="In West Philadelphia born and raised, \
-            on the playground is where I spent most of my days",
-            admin=False,
-        )  # Create an instance of the User class
-        db.session.add(new_user)  # Adds new User record to database
-        db.session.commit()  # Commits all changes
-    return render_template("users.jinja2", users=User.query.all(), title="Show Users")
+    user = UserRepository().getByEmail(userEmailSession.getEmailUser())
+    result = CreditCardRepository().getCardByIdPerson(user.fk_person)
+    creditCard = CreditCardRepository().returnToJson(result)
+    returnJson = json.dumps(creditCard)
+    return returnJson
+ 
+@app.route("/removeCreditCard", methods=['POST','GET'])
+def removeCreditCard():
 
+    postJson = request.data.decode('utf8')
+    data = json.loads(postJson)
 
+    result = CreditCardServices().remove(data)
+
+    returnJson = json.dumps(result)
+    return returnJson
+
+@app.route("/addCreditCard", methods=['POST','GET'])
+def addCreditCard():
+
+    user = UserRepository().getByEmail(userEmailSession.getEmailUser())
+    postJson = request.data.decode('utf8')
+    data = json.loads(postJson)
+
+    ownerName       = data['ownerName']
+    numberCard      = data['numberCard']
+    expirationDate  = data['expirationDate'].replace("T"," ").replace("Z","").replace(".000","")
+    secCode         = data['secCode']
+
+    card = CreditCard(user.fk_person,ownerName,numberCard,expirationDate,secCode,1)
+
+    result = CreditCardServices().addCard(card)
+    
+    returnJson = json.dumps(result)
+
+    return returnJson
+
+#------------------------------------------------------------------------------
+#-------------------------------HISTORIC---------------------------------------
+@app.route("/historic", methods=['GET'])
+def get_historic():
+
+    user = UserRepository().getByEmail(userEmailSession.getEmailUser())
+    historic = HistoricRepository().getHistoricByIdUser(user.id)
+    result = HistoricRepository().returnToJson(historic)
+    returnJson = json.dumps(result)
+    return returnJson
+
+#------------------------------------------------------------------------------
+#---------------------------------LOGOUT---------------------------------------
+
+## DO NOT USE ENDPOINT YET
+
+#------------------------------------------------------------------------------
+###################### END OF OPTIONS PAGES ###################################
+
+############################ HOME PAGES ###################################
+#   HOME
+#   PARKING DETAILS
+#   RESERVE
+###############################################################################
+#--------------------------------HOME------------------------------------------
+@app.route("/parkingLots", methods=['GET'])
+def parking_lots():   
+    parkingsFinal = []
+    parkingsRepo = ParkingRepository().getAllParkings()
+    parkingsJson = ParkingRepository().returnToJson(parkingsRepo)
+    for parking in parkingsJson:
+        services = ServicesRepository().getServicesByEstablishments(parking['id'])
+        parking['services_available'] = ServicesRepository().returnToJson(services)
+        parkingsFinal.append(parking)
+
+    returnJson = json.dumps(parkingsFinal)
+    return returnJson
+#----------------------------PARKING DETAILS-----------------------------------
+@app.route("/parkingLotsById", methods=['GET'])
+def parking_lots_id():   
+    id_establishment = request.args.get('id')
+    parkingsRepo = ParkingRepository().getAllParkingsByIdParking(id_establishment)
+    parkingsJson = ParkingRepository().returnToJson(parkingsRepo)
+    for parking in parkingsJson:
+        services = ServicesRepository().getServicesByEstablishments(parking['id'])
+        parking['services_available'] = ServicesRepository().returnToJson(services)
+
+    returnJson = json.dumps(parkingsJson[0])
+    return returnJson
+#-------------------------------RESERVE----------------------------------------
+
+# NO MONTHLY LEASE
+@app.route("/scheduleRents", methods=['POST','GET'])
+def scheduleRents():   
+
+    user = UserRepository().getByEmail(userEmailSession.getEmailUser())
+    postJson = request.data.decode('utf8')
+    data = json.loads(postJson)
+    print(postJson)
+
+    reserveStart        = data['id_establishment']
+    reserveStart        = data['reserve_start'].replace("T"," ").replace("Z","").replace(".000","")
+    reserveEnd          = data['reserve_end'].replace("T"," ").replace("Z","").replace(".000","")
+    servicesSelected    = data['servicesSelected']
+
+    sheduledLease = ScheduledRents(user.id,data['id_establishment'],reserveStart,reserveEnd)
+
+    result = AddSheduledLease().add(sheduledLease)
+
+    returnJson = json.dumps(result)
+    return returnJson
+
+@app.route("/addMonthlyLease", methods=['POST','GET'])
+def addMonthlyLease():
+
+    user = UserRepository().getByEmail(userEmailSession.getEmailUser())
+    postJson = request.data.decode('utf8')
+    data = json.loads(postJson)
+
+    id_establishment    = data['id_establishment']
+    start_lease         = data['start_lease'].replace("T"," ").replace("Z","").replace(".000","")
+    end_lease           = data['end_lease'].replace("T"," ").replace("Z","").replace(".000","")
+    id_card             = data['creditCard']['id_card']
+    cardDefault         = data['creditCard']['asDefault']
+
+    monthlyLease = MonthlyLease(user.id,id_establishment,id_card,start_lease,end_lease)
+
+    result = AddMonthlyLease().add(monthlyLease,int(cardDefault))
+
+    returnJson = json.dumps(result)
+    return returnJson
