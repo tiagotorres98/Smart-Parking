@@ -1,8 +1,7 @@
 #from _typeshed import OpenBinaryMode, OpenBinaryModeReading
 import json
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from re import *
-from sqlalchemy.sql.base import Options
 
 from app import app, db
 from app.controllers import customSession
@@ -26,6 +25,10 @@ from app.controllers.customSession import CustomSession
 from app.models.repository.UserRepository import UserRepository
 from app.models.optionsServices.options import *
 from app.models.homeServices.home import *
+from app.models.validators.checkIn import CheckInByCode,CheckOutByCode
+from app.models.checkInOutServices.checkInOut import CheckIn, CheckOut, PublishRating
+import asyncio
+from app.models.arduino.arduino import Gate
 
 
 app.secret_key = "EgcaT3Qm#a@vf8!EWV*!^nGaQmlXNcHErWN*"
@@ -123,8 +126,6 @@ def updateUserData():
     postJson = request.data.decode('utf8')
     data = json.loads(postJson)
 
-    
-
     email       =   data['email']
     address     =   data['address']
     phone       =   data['phone']
@@ -134,6 +135,7 @@ def updateUserData():
     carBrandData        =   data['car']['brand']
     carColorData        =   data['car']['color']
 
+    print(password)
     if authenticationVerify().verify(userEmailSession.getEmailUser(),password)["mensagem"] == "true":
         result = UpdateRegister().update(email,address,phone,carModelData,carBrandData,carColorData)
     else:
@@ -249,7 +251,7 @@ def parking_lots():
 #----------------------------PARKING DETAILS-----------------------------------
 @app.route("/parkingLotsById", methods=['GET'])
 def parking_lots_id():   
-    id_establishment = request.args.get('id')
+    id_establishment = request.args.get('id_estabelecimento')
     parkingsRepo = ParkingRepository().getAllParkingsByIdParking(id_establishment)
     parkingsJson = ParkingRepository().returnToJson(parkingsRepo)
     for parking in parkingsJson:
@@ -270,13 +272,13 @@ def scheduleRents():
     print(postJson)
 
     reserveStart        = data['id_establishment']
-    reserveStart        = data['reserve_start'].replace("T"," ").replace("Z","").replace(".000","")
-    reserveEnd          = data['reserve_end'].replace("T"," ").replace("Z","").replace(".000","")
+    reserveStart        = datetime.today() #data['reserve_start'].replace("T"," ").replace("Z","").replace(".000","")
+    reserveEnd          = datetime.today() + timedelta(minutes=15) #data['reserve_end'].replace("T"," ").replace("Z","").replace(".000","")
     servicesSelected    = data['servicesSelected']
 
     sheduledLease = ScheduledRents(user.id,data['id_establishment'],reserveStart,reserveEnd)
 
-    result = AddSheduledLease().add(sheduledLease)
+    result = AddSheduledLease().add(sheduledLease,servicesSelected)
 
     returnJson = json.dumps(result)
     return returnJson
@@ -300,3 +302,84 @@ def addMonthlyLease():
 
     returnJson = json.dumps(result)
     return returnJson
+#------------------------------------------------------------------------------
+########################### END OF HOME PAGES #################################
+
+####################### QRCODE AND NUMBERCODE PAGES ###########################
+#   SCAN QRCODE TO ENTER
+#   TYPE CODE TO ENTER
+#   SCAN QRCODE TO EXIT
+#   TYPE CODE TO EXIT
+#   RATING PAGE
+###############################################################################
+#------------------------- SCAN QRCODE TO ENTER -------------------------------
+#------------------------------------------------------------------------------
+#------------------------- TYPE CODE TO ENTER ---------------------------------
+@app.route("/codeToEnter", methods=['POST','GET'])
+def codeToEnter():
+    user = UserRepository().getByEmail(userEmailSession.getEmailUser())
+    postJson = request.data.decode('utf8')
+    
+    checkIn = CheckInByCode().check(postJson,user.id)
+    result = checkIn
+
+    if checkIn["mensagem"] == "true":
+        result = CheckIn().addRent(user)
+
+    if result["mensagem"] == "true":
+        asyncio.run(gate())
+
+    returnJson = json.dumps(result)
+    return returnJson
+
+#------------------------------------------------------------------------------
+#------------------------- SCAN QRCODE TO EXIT --------------------------------
+#------------------------------------------------------------------------------
+#------------------------- TYPE CODE TO EXIT ----------------------------------
+@app.route("/codeToExit", methods=['POST','GET'])
+def codeToExit():
+    user = UserRepository().getByEmail(userEmailSession.getEmailUser())
+    postJson = request.data.decode('utf8')
+    
+    checkOut = CheckOutByCode().check(postJson,user.id)
+    result = checkOut
+
+    if checkOut["mensagem"] == "true":
+        result  = CheckOut().endRent(user)
+
+    returnJson = json.dumps(result)
+    return returnJson
+
+#------------------------------------------------------------------------------
+#------------------------- TYPE CODE TO EXIT ----------------------------------
+@app.route("/rating", methods=['POST','GET'])
+def rating():
+    user = UserRepository().getByEmail(userEmailSession.getEmailUser())
+    postJson = request.data.decode('utf8')
+
+    result = PublishRating().publish(user,postJson)
+
+    returnJson = json.dumps(result)
+    return returnJson
+#------------------------------------------------------------------------------
+
+################################# ARDUINO #####################################
+#   ARDUINO
+###############################################################################
+
+async def gate():
+    print("iniciou")
+    gateOpen()
+    await asyncio.sleep(10)
+    gateClose()
+    print("finalizou")
+
+@app.route("/gateOpen")
+def gateOpen():
+    Gate().open()
+    return "Aberto"
+
+@app.route("/gateClose")
+def gateClose():
+    Gate().close()
+    return "Fechado"

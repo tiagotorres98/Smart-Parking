@@ -74,6 +74,7 @@ class CreditCardServices:
         try:
             cardRepo = CreditCardRepository().getCardByNumber(card.numberCard)
             if len(cardRepo) == 0:
+                card.defaultCard = 0
                 db.session.add(card)
                 db.session.commit()
                 return {"mensagem":"true"}

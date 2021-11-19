@@ -12,12 +12,19 @@ class HistoricRepository:
         def returnToJson(self, result):
             historic = []
             for x in result:
+                t = x.Rent.exit_time
+                timeout = ""
+                if t == None:
+                    timeout = "Em uso"
+                else:
+                    timeout =  x.Rent.exit_time.strftime("%H:%M:%S")
+                
                 y = {
                     'parking_name': x.Establishment.name, 
                     'date': x.Rent.scheduling_date.strftime("%d/%m/%Y"), 
                     'price': x.Rent.hourly_value, 
                     'timeIn' : x.Rent.entry_time.strftime("%H:%M:%S"), 
-                    'timeOut' : x.Rent.exit_time.strftime("%H:%M:%S")
+                    'timeOut' : timeout
                 }
                 historic.append(y)
             return historic

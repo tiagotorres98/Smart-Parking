@@ -6,7 +6,8 @@ from app.models.repository.sheduledRentsRepository import ScheduledRentsReposito
 from app.models.tables import MonthlyLease, ScheduledRents, ServicesRentalScheduled
 
 class AddSheduledLease():
-    def add(self, sheduledRent):
+    def add(self, sheduledRent,servicesSelected):
+        print(servicesSelected)
         try:
             result = ScheduledRentsRepository().getByUserId(sheduledRent.fk_user)
             services = ServicesRepository().getServicesByEstablishments(sheduledRent.fk_establishments)
@@ -16,8 +17,8 @@ class AddSheduledLease():
                 db.session.add(sheduledRent)
                 result = ScheduledRentsRepository.getLast()
 
-                for service in services:
-                    s = ServicesRentalScheduled(result.id_scheduled,service.id_service)
+                for service in servicesSelected:
+                    s = ServicesRentalScheduled(result.id_scheduled,service)
                     db.session.add(s)
 
                 db.session.commit()

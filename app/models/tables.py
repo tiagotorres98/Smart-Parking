@@ -411,18 +411,17 @@ class ServicesRentalScheduled(db.Model):
         self.fk_service = fk_service
 
     
-'''
 class Rent_Service(db.Model):
     __tablename__ = "services_rental"
 
     id_service_rent = db.Column(db.Integer, primary_key=True)
     fk_rent = db.Column(db.Integer, db.ForeignKey("rents.id_rent")) 
     fk_service = db.Column(db.Integer, db.ForeignKey("services.id_service")) 
-    status = db.Column(db.Boolean, nullable=False)
-    desc = db.Column(db.String(500), nullable=False)
+    status = db.Column(db.Boolean, nullable=True)
+    description = db.Column(db.String(500), nullable=True)
 
-    rental = db.relationship("Leases", foreign_keys=fk_rent)
-    service = db.relationship("Service", foreign_keys=fk_service)
+    #rental = db.relationship("MonthlyLease", foreign_keys=fk_rent)
+    #service = db.relationship("Service", foreign_keys=fk_service)
 
     def __init__(self, fk_rent, fk_service, status, desc):
         self.fk_rent = fk_rent
@@ -430,9 +429,18 @@ class Rent_Service(db.Model):
         self.status = status
         self.desc = desc
 
-    def __repr__(self):
-        return "<Rent_Service %r" % self.id_service_rent
-''' 
+class Gate_Status(db.Model):
+    __tablename__ = "gate_status"
+
+    id = db.Column(db.Integer, primary_key=True)
+    ic_open = db.Column(db.Integer)
+    last_modified_date = db.Column(db.DateTime)
+
+    def __init__(self, id, ic_open, last_modified_date):
+        self.id = id
+        self.ic_open = ic_open
+        self.last_modified_date = last_modified_date
+
 '''
 class Payment_Method(db.Model):
     __tablename__ = "payment_method"
